@@ -189,10 +189,7 @@ func (c *consulSync) Unlock(id string) error {
 	if !ok {
 		return errors.New("lock not found")
 	}
-	if err := l.Unlock(); err != nil {
-		return err
-	}
-	err := l.Destroy()
+	err := l.Unlock()
 	delete(c.locks, id)
 	return err
 }
