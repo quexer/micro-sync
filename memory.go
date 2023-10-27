@@ -23,6 +23,18 @@ type memoryLock struct {
 	release chan bool
 }
 
+func (p *memoryLock) LeftTtl() time.Duration {
+	if p.ttl <= 0 {
+		return 0
+	}
+
+	live := time.Since(p.time)
+	if live > p.ttl {
+		return 0
+	}
+	return p.ttl - live
+}
+
 type memoryLeader struct {
 	opts   sync.LeaderOptions
 	id     string
@@ -107,7 +119,7 @@ func (m *memorySync) Lock(id string, opts ...sync.LockOption) error {
 	// decide if we should wait
 	if options.Wait > time.Duration(0) {
 		wait = time.After(options.Wait)
-	} else if options.Wait == time.Duration(0) {
+	} else if options.Wait == time.Duration(0) && lk.LeftTtl() > 0 {
 		// fail to get and no wait, then return err immediately
 		return sync.ErrLockTimeout
 	}
