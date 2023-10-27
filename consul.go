@@ -146,6 +146,10 @@ func (c *consulSync) Lock(id string, opts ...sync.LockOption) error {
 
 	if options.Wait < time.Duration(0) {
 		options.Wait = 24 * time.Hour // wait long time if wait < 0, similar to forever
+	} else if options.Wait == time.Duration(0) {
+		// 0 will be replaced with default(15s), so use a small value instead
+		// see github.com/hashicorp/consul/api@v1.25.1/lock.go:119
+		options.Wait = 10 * time.Millisecond
 	}
 
 	rawKey := strings.Replace(c.options.Prefix+id, "/", "-", -1)
