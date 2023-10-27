@@ -144,13 +144,8 @@ func (c *consulSync) Lock(id string, opts ...sync.LockOption) error {
 		o(&options)
 	}
 
-	if options.Wait <= time.Duration(0) {
-		options.Wait = api.DefaultLockWaitTime
-	}
-
-	ttl := fmt.Sprintf("%v", options.TTL)
-	if options.TTL <= time.Duration(0) {
-		ttl = api.DefaultLockSessionTTL
+	if options.Wait < time.Duration(0) {
+		options.Wait = 24 * time.Hour // wait long time if wait < 0, similar to forever
 	}
 
 	rawKey := strings.Replace(c.options.Prefix+id, "/", "-", -1)
@@ -161,7 +156,6 @@ func (c *consulSync) Lock(id string, opts ...sync.LockOption) error {
 	l, err := c.c.LockOpts(&api.LockOptions{
 		Key:          key,
 		LockWaitTime: options.Wait,
-		SessionTTL:   ttl,
 		LockTryOnce:  true, // try until LockWaitTime
 	})
 
@@ -181,6 +175,14 @@ func (c *consulSync) Lock(id string, opts ...sync.LockOption) error {
 	c.mtx.Lock()
 	c.locks[id] = l
 	c.mtx.Unlock()
+
+	if options.TTL > 0 {
+		go func() {
+			// auto unlock after ttl
+			time.Sleep(options.TTL)
+			_ = c.Unlock(id)
+		}()
+	}
 
 	return nil
 }
