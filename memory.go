@@ -107,6 +107,9 @@ func (m *memorySync) Lock(id string, opts ...sync.LockOption) error {
 	// decide if we should wait
 	if options.Wait > time.Duration(0) {
 		wait = time.After(options.Wait)
+	} else if options.Wait == time.Duration(0) {
+		// fail to get and no wait, then return err immediately
+		return sync.ErrLockTimeout
 	}
 
 	// check the ttl of the lock
