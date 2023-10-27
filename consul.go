@@ -177,11 +177,18 @@ func (c *consulSync) Lock(id string, opts ...sync.LockOption) error {
 	c.mtx.Unlock()
 
 	if options.TTL > 0 {
-		go func() {
+		go func(currentLk *api.Lock) {
 			// auto unlock after ttl
 			time.Sleep(options.TTL)
-			_ = c.Unlock(id)
-		}()
+			c.mtx.Lock()
+			restore := c.locks[id]
+			c.mtx.Unlock()
+
+			// auto unlock only if the lock is still the same
+			if restore == currentLk {
+				_ = c.Unlock(id)
+			}
+		}(l)
 	}
 
 	return nil
