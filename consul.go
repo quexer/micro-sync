@@ -154,8 +154,8 @@ func (c *consulSync) Lock(id string, opts ...sync.LockOption) error {
 	}
 
 	rawKey := strings.Replace(c.options.Prefix+id, "/", "-", -1)
-	rawKey = strings.Replace(c.options.Prefix+id, ",", "-", -1)
-	rawKey = strings.Replace(c.options.Prefix+id, ":", "-", -1)
+	rawKey = strings.Replace(rawKey, ",", "-", -1)
+	rawKey = strings.Replace(rawKey, ":", "-", -1)
 	key := path.Join(c.path, rawKey)
 
 	l, err := c.c.LockOpts(&api.LockOptions{
