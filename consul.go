@@ -153,7 +153,10 @@ func (c *consulSync) Lock(id string, opts ...sync.LockOption) error {
 		ttl = api.DefaultLockSessionTTL
 	}
 
-	key := path.Join(c.path, strings.Replace(c.options.Prefix+id, "/", "-", -1))
+	rawKey := strings.Replace(c.options.Prefix+id, "/", "-", -1)
+	rawKey = strings.Replace(c.options.Prefix+id, ",", "-", -1)
+	rawKey = strings.Replace(c.options.Prefix+id, ":", "-", -1)
+	key := path.Join(c.path, rawKey)
 
 	l, err := c.c.LockOpts(&api.LockOptions{
 		Key:          key,
